@@ -16,4 +16,4 @@ export const useKVDux = () => {
   });
 };
 
-// export const { Provider } = Store;
+export const { Provider } = Store;

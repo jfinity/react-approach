@@ -1,22 +1,22 @@
 import React from "react";
 
-const initMiddleware = () => null;
+const applyUnary = (fn, arg) => typeof fn === "function" ? fn(arg) : null;
 
-const wrapMiddleware = middleware =>
-  typeof middleware === "function"
-    ? function() {
-        middleware.apply(this, arguments); // TODO: handle this result(?)
-        return initMiddleware();
-      }
-    : initMiddleware;
+const bindMiddleware = ref =>
+  function() {
+    if (typeof ref.handler === "function") {
+      return ref.handler.apply(this, arguments);
+    }
+    return undefined;
+  };
 
-export const useMiddleware = (config, factory) => {
-  const middleware = React.useRef(initMiddleware);
+export const useMiddleware = (...args) => {
+  const curry = args.pop();
+  const handler = args.reduce(applyUnary, curry);
+  const ref = React.useRef(null);
 
-  middleware.current =
-    middleware.current === initMiddleware
-      ? wrapMiddleware(factory ? factory(config) : config)
-      : middleware.current;
+  ref.current = ref.current || { handler, middleware: bindMiddleware(ref) };
+  ref.current.handler = handler;
 
-  return React.useReducer(middleware.current, initMiddleware())[1];
+  return ref.current.middleware;
 };
